@@ -1,0 +1,121 @@
+
+.Spring Security
+1.简介:
+	spring security:是Spring下一款定制的用户认证(Authentication)和用户授权(Authorization)的安全框架
+2.功能:
+	①Authentication:认证
+	②Authorization:授权
+	③安全防护:防止session攻击
+	④和当下流行框架容易结合
+3.Spring Security 和 Shiro 的区别:
+	相同点:
+		①认证功能
+		②授权功能
+		③加密功能
+		④会话管理
+		⑤缓存
+	不同点:
+		优点:
+			①Spring Security 基于Spring，配合Spring更加方便，而shiro需要整合
+			②Spring security 功能相对比较丰富,基于spring
+		缺点:
+			①Shiro配置相对简单，spring security上手难度较大
+			②shiro依赖性比较低，不需要依赖任何框架，而spring security需要基于spring
+4.spring security 底层原理:
+	核心:SpringSecurityFilterChain(过滤器链)
+	用户请求---->UsernamePasswordAuthenticationFilter(鉴于表单用户校验)---->BasicAuthentication(基于HttpBasic方式校验)
+	---->...---->ExceptionTransactionFilter(登录有无异常处理)---->FilterSecurityInterceptor(总拦截器)---->被保护资源
+5.spring security和spring，springmvc的基本配置:
+	①首先创建一个maven-web项目，导入对应依赖;
+	②配置spring-mvc:
+		(1)开启注解:<mvc:annotation-driven/>
+		(2)配置扫描路径:<context:component-scan base-pakeage=""/>
+		(3)配置视图解析器:InternalResourceViewResolver
+	③配置applicationContext.xml(Spring上下文)
+		(1)导入约束文件,暂时无需配置
+	④配置spring-security.xml
+		(1)导入约束文件;
+		(2)配置security开启方式(基于HttpBasic或者form-login(常用))
+		<security:http>
+			<security:form-login login-page="/(对应url)"...>
+			<security:intercept-url pattern="(需要保护的url)" access="(需要的权限)">
+		<security:http/>
+		
+		<security:authentication-manager>
+			<!--自定义用户认证-->---方法1
+			<security:authentication-provider user-service-ref="myUserDetailService"/>
+			<!--提供认证信息,(账户名，密码，用户权限)(此处写死)-->---方法2(不常用)
+			<!--<security:user-service>-->
+			<!--<security:user name="linbin" password="123456" authorities="ROLE_USER"></security:user>-->
+			<!--<security:user name="erhuan" password="123456" authorities="ROLE_ADMIN"></security:user>-->
+			<!--</security:user-service>-->
+		<security:authentication-manager/>
+	⑤配置web.xml
+		(1)配置前端控制器DispatcherServlet
+		(2)配置Spring监听器:
+			<listener>
+				<description>启动spring</description>
+				<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+			</listener>
+			<context-param><!--配置初始化参数-->
+				<param-name>contextConfigLocation</param-name>
+				<param-value>classpath:applicationContext.xml
+							 classpath:spring-security.xml
+				</param-value>
+			</context-param>
+		(3)配饰spring security过滤链--跳到spring-security.xml
+		<filter>
+			<filter-name>springSecurityFilterChain</filter-name>
+			<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+		 </filter>
+		 <filter-mapping>
+			<filter-name>springSecurityFilterChain</filter-name>
+			<url-pattern>/*</url-pattern>
+		 </filter-mapping>
+		 
+6.spring security配置文件详解:
+	①拦截方式---2种方法
+		(1)表单登录拦截:<security:form-login login-page="/(对应url)" authentication-success-handler-ref="..."/>
+			a.login-page属性为自定义拦截的登录页面;
+			b.authentication-success-handler-ref属性为自定义授权成功逻辑
+			c.authentication-failure-handler-ref属性为自定义授权失败逻辑
+		(2)HttpBasic拦截:<security:http-basic/>--不常用		
+	<security:access-denied-handler error-page="/error"/>自定义权限不足处理
+	②资源拦截和访问权限:
+		<security:intercept-url pattern="/对应url" access="对应权限">
+		例:<security:intercept-url pattern="/userLogin" access="permitAll()"/>
+		参数:
+			a.pattern:配置对应的url
+			b.access:配置对应的权限
+		权限方法:
+			hasRole():对应的单个角色权限
+			hasAnyRole:()对应的多个角色权限
+			hasAuthority():对应的操作权限
+			hasAnyAuthority():对应的多个操作权限
+			isFullyAuthenticated():登录认证可以访问而且不是记住我用户
+			isRememberMe()：当前用户为记住我用户
+			isAuthenticated():登录认证可以访问
+			isAnonymous():匿名用户可以访问，登录后无法访问
+			permitAll():无需权限可以访问
+			denyAll():所有都不可以访问
+	③csfr安全防护机制
+		<!--关闭csrf安全防护机制:开启防止跨域-->
+		<security:csrf disabled="true"/>
+		
+△7.spring security认证流程(源码分析):
+	①首先在web.xml配置spring security过滤链 springSecurityFilterChain 并在spring监听器中配置启动配置文件spring-security.xml
+	②在spring-security.xml配置被保护的资源，以及授权权限，授权方式等等
+		(1)<security:http>配置</security:http>
+		(2)<security:authentication-manager/>配置认证管理器
+	③用户表单提交收到请求之后;首先来到表单验证器UsernamePasswordAuthenticationFilter的
+	 父类AbstractAuthenticationProcessingFilter中,调用doFilter()方法,判断是否需要授权，需要继续，不需要执行下个处理器
+	④当用户需要授权时,调用表单验证器UsernamePasswordAuthenticationFilter中的attemptAuthentication()方法开始进行授权
+		(1)实例化一个UsernamePasswordAuthenticationToken对象
+		(2)回到表单验证器UsernamePasswordAuthenticationFilter中
+	⑤接下来调用getAuthenticationManager进入到AuthenticationManager的具体实现类ProviderManager(认证管理器,只负责管理，不进行校验)中
+	⑥在ProviderManager中调用authenticate方法对用户登录进行判断，支持进入到AbstractUserDetailAuthenticationProvider中，不支持抛出异常
+	⑦在AbstractUserDetailAuthenticationProvider中调用authenticate方法判断User是否为空(一般为空,还未授权)，然后调用retrieveUser()方法
+	 下的UserDetailService的loadUserByUsername()方法获取用户信息，返回
+	⑧然后调用createSuccessAuthentication设置认证成功(包含对应权限)--校验
+	⑨然后返回UsernamePasswordAuthenticationFilter中，在返回AbstarctAuthenticationProcessingFilter中，此时authResult不为空，转到认证成功
+	 处理器AuthenticationSuccessHandler下的onAuthenticationSuccess方法处理业务

@@ -1,0 +1,34 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+        http://www.springframework.org/schema/security
+        http://www.springframework.org/schema/security/spring-security.xsd">
+
+    <bean id="userDetailService" class="com.linbin.security.MyUserDetailService"/>
+    <!--配置security方式-->
+    <security:http>
+        <security:form-login login-page="/userLogin" authentication-failure-forward-url="/error?error=true"/>
+        <!--注意权限需要按顺序-->
+        <security:intercept-url pattern="/index" access="permitAll()"/>
+        <security:intercept-url pattern="/userLogin" access="permitAll()"/>
+
+        <security:intercept-url pattern="/product/add" access="hasAuthority('ROLE_PRODUCT_ADD')"/>
+        <security:intercept-url pattern="/product/list" access="hasAuthority('ROLE_PRODUCT_LIST')"/>
+        <security:intercept-url pattern="/product/update" access="hasAuthority('ROLE_PRODUCT_UPDATE')"/>
+        <security:intercept-url pattern="/product/delete" access="hasAuthority('ROLE_PRODUCT_DELETE')"/>
+
+        <security:intercept-url pattern="/**" access="isFullyAuthenticated()"/>
+
+        <!--配置权限不足处理-->
+        <security:access-denied-handler error-page="/error"/>
+
+        <security:csrf disabled="true"/>
+    </security:http>
+
+    <!--配置认证管理-->
+    <security:authentication-manager>
+        <security:authentication-provider user-service-ref="userDetailService"/>
+    </security:authentication-manager>
+</beans>

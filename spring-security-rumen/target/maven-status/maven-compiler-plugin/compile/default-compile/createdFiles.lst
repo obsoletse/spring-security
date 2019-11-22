@@ -1,0 +1,4 @@
+com\linbin\security\MyUserDetailService.class
+com\linbin\controller\MainController.class
+com\linbin\controller\ProductController.class
+com\linbin\security\MyAuthenticationSuccessHandler.class

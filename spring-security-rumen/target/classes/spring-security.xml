@@ -1,0 +1,54 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+        http://www.springframework.org/schema/security
+        http://www.springframework.org/schema/security/spring-security.xsd">
+
+    <!--<security:http>:是spring过滤器的配置:
+        1.需要拦截什么资源
+        2.什么资源需要什么权限
+        3.定义认证的方式: HttpBasic,FormLogin(*常用)
+        4.定义登录的页面，定义登录的请求地址，定义错误的处理方式
+    -->
+    <security:http>
+        <!--表单登录  login-page自定义登录页面(记得配置路由授权)-->
+        <security:form-login login-page="/userLogin" authentication-success-handler-ref="myAuthenticationSuccessHandler"/>
+        <!--自定义权限不足处理-->
+        <security:access-denied-handler error-page="/error"/>
+        <!--<security:http-basic/>-->
+        <!--
+            pattern:需要拦截的资源路径;
+            access:拦截方式
+                    isFullyAuthenticated():拦截所有请求
+                    permitAll():所有可以访问
+                    isAnonymous()-匿名用户才可以访问:登录后不可以访问/
+        -->
+        <security:intercept-url pattern="/index" access="permitAll()"/>
+        <security:intercept-url pattern="/userLogin" access="permitAll()"/>
+        <!--分配角色权限-->
+        <security:intercept-url pattern="/product/add" access="hasRole('ROLE_USER')"/>
+        <security:intercept-url pattern="/product/update" access="hasRole('ROLE_USER')"/>
+        <security:intercept-url pattern="/product/delete" access="hasRole('ROLE_ADMIN')"/>
+        <security:intercept-url pattern="/product/list" access="hasRole('ROLE_ADMIN')"/>
+        <security:intercept-url pattern="/**" access="isFullyAuthenticated()"/>
+
+        <!--关闭csrf安全防护机制:开启防止跨域-->
+        <security:csrf disabled="true"/>
+    </security:http>
+
+    <!--认证管理器-->
+    <security:authentication-manager>
+        <!--自定义用户认证-->
+        <security:authentication-provider user-service-ref="myUserDetailService"/>
+                <!--提供认证信息,(账户名，密码，用户权限)(此处写死)-->
+<!--            <security:user-service>-->
+<!--                <security:user name="linbin" password="123456" authorities="ROLE_USER"></security:user>-->
+<!--                <security:user name="erhuan" password="123456" authorities="ROLE_ADMIN"></security:user>-->
+<!--            </security:user-service>-->
+    </security:authentication-manager>
+
+    <bean id="myUserDetailService" class="com.linbin.security.MyUserDetailService"/>
+        <bean id="myAuthenticationSuccessHandler" class="com.linbin.security.MyAuthenticationSuccessHandler"/>
+</beans>

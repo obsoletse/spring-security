@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.linbin.mapper.UserMapper">
+    <select id="findUserByUsername" parameterType="String" resultType="com.linbin.domain.User">
+        select * from sys_user where username = #{username};
+    </select>
+
+    <select id="findPermissionByUsername" parameterType="String" resultType="com.linbin.domain.Permission">
+        select sys_permission.*
+	from
+		sys_user user
+		INNER JOIN sys_user_role role on user.id = role.userId
+		inner join sys_role_permission permission on role.roleId = permission.role_id
+		inner join sys_permission on permission.perm_id = sys_permission.id
+		where user.username = #{username};
+    </select>
+</mapper>
