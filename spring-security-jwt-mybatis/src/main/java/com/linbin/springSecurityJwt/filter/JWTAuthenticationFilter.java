@@ -82,6 +82,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             role = authority.getAuthority();
         }
 
+
         /*生成token*/
         String token = JwtTokenUtils.createToken(jwtUser.getUsername(),role,isRemember);
 
